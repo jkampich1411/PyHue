@@ -175,6 +175,8 @@ class Hue:
             raise Exception(
                 f"Error {res['err']['type']}: {res['err']['description']} at {res['err']['address']}")
 
+        return True
+
     def get_light(self, deviceId):
         dev = self.__authenticated_api_request(
             "GET", url="/lights/" + str(deviceId))
