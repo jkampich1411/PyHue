@@ -1,3 +1,4 @@
+from operator import contains
 import requests as reqs
 import urllib3 as urll3
 import os
@@ -137,4 +138,87 @@ class Hue:
         else:
             raise Exception("Error: " + str(res.status_code) + " " + res.text)
 
-    def
+    def get_all_devices(self):
+        devices = []
+        devs = self.__authenticated_api_request("GET", url="/lights")
+
+        if "error" in dev:
+            raise Exception(
+                f"Error {dev['error']['type']}: {dev['error']['description']} at {dev['error']['address']}")
+
+        for dev in devs:
+            devices.append({
+                "id": int(dev),
+                "type": devs[dev]["type"],
+                "manufacturer": devs[dev]["manufacturername"],
+                "productName": devs[dev]["productname"],
+                "modelId": devs[dev]["modelid"],
+                "name": devs[dev]["name"],
+            })
+        return(devices)
+
+    def rename_device(self, deviceId, newName):
+        res = self.__authenticated_api_request(
+            "PUT", url="/lights/" + str(deviceId), body={"name": newName})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return True
+
+    def delete_device(self, deviceId):
+        res = self.__authenticated_api_request(
+            "DELETE", url="/lights/" + str(deviceId))
+
+        if "err" in res:
+            raise Exception(
+                f"Error {res['err']['type']}: {res['err']['description']} at {res['err']['address']}")
+
+    def get_light(self, deviceId):
+        dev = self.__authenticated_api_request(
+            "GET", url="/lights/" + str(deviceId))
+
+        if "error" in dev:
+            raise Exception(
+                f"Error {dev['error']['type']}: {dev['error']['description']} at {dev['error']['address']}")
+
+        return({
+            "type": dev["type"],
+            "manufacturer": dev["manufacturername"],
+            "productName": dev["productname"],
+            "modelId": dev["modelid"],
+            "name": dev["name"],
+            "state": {
+                "on": dev["state"]["on"],
+                "bri": dev["state"]["bri"],
+                "hue": dev["state"]["hue"],
+                "sat": dev["state"]["sat"],
+                "xy": dev["state"]["xy"],
+                "ct": dev["state"]["ct"],
+                "alert": dev["state"]["alert"],
+                "effect": dev["state"]["effect"],
+                "colormode": dev["state"]["colormode"],
+                "reachable": dev["state"]["reachable"],
+            }
+        })
+
+    def onOff_toggle(self, deviceId):
+        res = self.__authenticated_api_request(
+            "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": not self.get_light(deviceId)["state"]["on"]})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]["on"]
+
+    def onOff_set(self, deviceId, onOff):
+        res = self.__authenticated_api_request(
+            "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": onOff})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: \"{res[0]['error']['description']}\" at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]["on"]
