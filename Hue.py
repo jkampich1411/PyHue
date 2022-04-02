@@ -138,7 +138,7 @@ class Hue:
         else:
             raise Exception("Error: " + str(res.status_code) + " " + res.text)
 
-    def get_all_devices(self):
+    def get_all_lights(self):
         devices = []
         devs = self.__authenticated_api_request("GET", url="/lights")
 
@@ -157,7 +157,7 @@ class Hue:
             })
         return(devices)
 
-    def rename_device(self, deviceId, newName):
+    def rename_light(self, deviceId, newName):
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId), body={"name": newName})
 
@@ -167,7 +167,7 @@ class Hue:
 
         return True
 
-    def delete_device(self, deviceId):
+    def delete_light(self, deviceId):
         res = self.__authenticated_api_request(
             "DELETE", url="/lights/" + str(deviceId))
 
@@ -203,7 +203,7 @@ class Hue:
             }
         })
 
-    def onOff_toggle(self, deviceId):
+    def onOff_light_toggle(self, deviceId):
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": not self.get_light(deviceId)["state"]["on"]})
 
@@ -213,7 +213,7 @@ class Hue:
 
         return self.get_light(deviceId)["state"]["on"]
 
-    def onOff_set(self, deviceId, onOff):
+    def onOff_light_set(self, deviceId, onOff):
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": onOff})
 
