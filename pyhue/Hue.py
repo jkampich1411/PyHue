@@ -230,6 +230,16 @@ class Hue:
 
         return self.get_light(deviceId)["state"]["on"]
 
+    def set_light_custom(self, deviceId, customData):
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body=customData)
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]
+
     def set_light_brightness(self, deviceId, brightness):
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"bri": brightness})
@@ -240,7 +250,7 @@ class Hue:
 
         return self.get_light(deviceId)["state"]["bri"]
 
-    def set_light_effect(self, deviceId, effect):
+    def set_light_breathing(self, deviceId, effect):
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"alert": effect})
 
@@ -249,3 +259,29 @@ class Hue:
                 f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
 
         return self.get_light(deviceId)["state"]["alert"]
+
+    def colorloop_light_toggle(self, deviceId):
+        val = self.get_light(deviceId)["state"]["effect"]
+        if val == "none":
+            val = "colorloop"
+        else:
+            val = "none"
+
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]["effect"]
+
+    def colorloop_light_set(self, deviceId, effect):
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body={"effect": effect})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]["effect"]
