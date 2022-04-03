@@ -19,9 +19,13 @@ class Hue:
 
         self.__startupLogic(ip)
 
+        self.__workingDir = os.getcwd()
+        self.__ip_path = f"{self.__workingDir}/.cached_ip_important"
+        self.__username_path = f"{self.__workingDir}/.cached_username_important"
+
     def __startupLogic(self, ip):
-        if os.path.exists('./.cached_ip_important'):
-            with open('./.cached_ip_important', 'r') as f:
+        if os.path.exists(self.__ip_path):
+            with open(self.__ip_path, 'r') as f:
                 dat = f.read()
                 if dat != "":
                     self.__bridge_discovered(dat)
@@ -53,12 +57,12 @@ class Hue:
         self.__bridgeIp = ip
         res = self.__unauthenticated_api_request("GET", url="/0/config")
         if res:
-            with open('./.cached_ip_important', 'w') as f:
+            with open(self.__ip_path, 'w') as f:
                 self.__bridgeIp = ip
                 f.write(ip)
 
-            if os.path.exists('./.cached_username_important'):
-                with open('./.cached_username_important', 'r') as f:
+            if os.path.exists(self.__username_path):
+                with open(self.__username_path, 'r') as f:
                     dat = f.read()
                     if dat != "":
                         self.__bridge = {
@@ -90,7 +94,7 @@ class Hue:
                 "POST", url="", body={"devicetype": "PyHue"})
 
             if authReqJson[0]["success"]["username"] is not None:
-                with open('./.cached_username_important', 'w') as f:
+                with open(self.__username_path, 'w') as f:
                     f.write(authReqJson[0]["success"]["username"])
                 self.__bridge = {
                     "ip": ip,
