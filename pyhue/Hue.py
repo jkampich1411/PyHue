@@ -17,11 +17,11 @@ class Hue:
 
         self.__discoveryTried = 0
 
-        self.__startupLogic(ip)
-
         self.__workingDir = os.getcwd()
         self.__ip_path = f"{self.__workingDir}/.cached_ip_important"
         self.__username_path = f"{self.__workingDir}/.cached_username_important"
+
+        self.__startupLogic(ip)
 
     def __startupLogic(self, ip):
         if os.path.exists(self.__ip_path):
