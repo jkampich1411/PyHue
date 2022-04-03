@@ -16,6 +16,7 @@ setup(
         "pyhue",
     ],
     url="https://github.com/jkampich1411/pyhue",
+
     requires=["zeroconf", "requests", "urllib3"],
     classifiers=[
         "Programming Language :: Python :: 3",

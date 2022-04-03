@@ -2,6 +2,7 @@ from operator import contains
 import requests as reqs
 import urllib3 as urll3
 import os
+import pickle
 
 from Discovery import BrowseMdns, BrowseEndpoint
 
@@ -224,3 +225,23 @@ class Hue:
                 f"Error {res[0]['error']['type']}: \"{res[0]['error']['description']}\" at {res[0]['error']['address']}")
 
         return self.get_light(deviceId)["state"]["on"]
+
+    def set_light_brightness(self, deviceId, brightness):
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body={"bri": brightness})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]["bri"]
+
+    def set_light_effect(self, deviceId, effect):
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body={"alert": effect})
+
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
+        return self.get_light(deviceId)["state"]["alert"]
