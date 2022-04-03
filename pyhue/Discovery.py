@@ -5,7 +5,7 @@ from time import sleep
 import socket
 
 
-class mdns_listener:
+class __mdns_listener:
     def __init__(self, add):
         self.__add = add
 
@@ -32,7 +32,7 @@ def BrowseEndpoint(addF):
 
 def BrowseMdns(target, addF):
     zeroConf = Zeroconf()
-    listener = mdns_listener(add=addF)
+    listener = __mdns_listener(add=addF)
     browser = ServiceBrowser(zeroConf, target, listener)
     sleep(3)
     zeroConf.close()
