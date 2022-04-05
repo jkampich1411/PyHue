@@ -8,6 +8,7 @@ from zeroconf import ServiceBrowser, Zeroconf
 from time import sleep
 import socket
 
+
 class __mdns_listener:
     def __init__(self, add):
         self.__add = add
@@ -264,6 +265,9 @@ class Hue:
 
         return self.get_light(deviceId)["state"]["on"]
 
+    def get_onOff(self, deviceId):
+        return self.get_light(deviceId=deviceId)["state"]["on"]
+
     def set_light_custom(self, deviceId, customData):
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body=customData)
@@ -282,6 +286,9 @@ class Hue:
             raise Exception(
                 f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
 
+        return self.get_light(deviceId)["state"]["bri"]
+
+    def get_light_brightness(self, deviceId):
         return self.get_light(deviceId)["state"]["bri"]
 
     def set_light_breathing(self, deviceId, effect):
@@ -319,3 +326,9 @@ class Hue:
                 f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
 
         return self.get_light(deviceId)["state"]["effect"]
+
+    def get_light_effect(self, deviceId):
+        return({
+            'effect': self.get_light(deviceId)["state"]["effect"],
+            'breathing': self.get_light(deviceId)["state"]["alert"]
+        })
