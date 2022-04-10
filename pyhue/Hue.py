@@ -1,4 +1,3 @@
-from operator import contains
 import requests as reqs
 from requests import get
 import urllib3 as urll3
@@ -178,13 +177,16 @@ class Hue:
         else:
             raise Exception("Error: " + str(res.status_code) + " " + res.text)
 
+    def __ExceptionError(self, res):
+        if "error" in res[0]:
+            raise Exception(
+                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+
     def get_all_lights(self):
         devices = []
         devs = self.__authenticated_api_request("GET", url="/lights")
 
-        if "error" in dev:
-            raise Exception(
-                f"Error {dev['error']['type']}: {dev['error']['description']} at {dev['error']['address']}")
+        self.__ExceptionError(devs)
 
         for dev in devs:
             devices.append({
@@ -197,33 +199,24 @@ class Hue:
             })
         return(devices)
 
-    def rename_light(self, deviceId, newName):
+    def rename_light(self, deviceId: int, newName: str) -> bool:
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId), body={"name": newName})
-
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        self.__ExceptionError(res)
 
         return True
 
-    def delete_light(self, deviceId):
+    def delete_light(self, deviceId: int) -> bool:
         res = self.__authenticated_api_request(
             "DELETE", url="/lights/" + str(deviceId))
-
-        if "err" in res:
-            raise Exception(
-                f"Error {res['err']['type']}: {res['err']['description']} at {res['err']['address']}")
+        self.__ExceptionError(res)
 
         return True
 
-    def get_light(self, deviceId):
+    def get_light(self, deviceId: int) -> dict:
         dev = self.__authenticated_api_request(
             "GET", url="/lights/" + str(deviceId))
-
-        if "error" in dev:
-            raise Exception(
-                f"Error {dev['error']['type']}: {dev['error']['description']} at {dev['error']['address']}")
+        self.__ExceptionError(dev)
 
         return({
             "type": dev["type"],
@@ -245,63 +238,70 @@ class Hue:
             }
         })
 
-    def onOff_light_toggle(self, deviceId):
+    def onOff_light_toggle(self, deviceId: int) -> str:
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": not self.get_light(deviceId)["state"]["on"]})
-
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]["on"]
 
-    def onOff_light_set(self, deviceId, onOff):
+    def onOff_light_set(self, deviceId: int, onOff: bool) -> str:
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": onOff})
-
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: \"{res[0]['error']['description']}\" at {res[0]['error']['address']}")
+        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]["on"]
 
-    def get_onOff(self, deviceId):
+    def get_onOff(self, deviceId: int):
         return self.get_light(deviceId=deviceId)["state"]["on"]
 
-    def set_light_custom(self, deviceId, customData):
+    def set_light_custom(self, deviceId: int, customData: dict) -> dict:
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body=customData)
-
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]
 
-    def set_light_brightness(self, deviceId, brightness):
+    def set_light_brightness(self, deviceId: int, brightness: int) -> int:
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"bri": brightness})
+        self.__ExceptionError(res)
 
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        return int(self.get_light(deviceId)["state"]["bri"])
 
-        return self.get_light(deviceId)["state"]["bri"]
+    def get_light_brightness(self, deviceId: int) -> int:
+        return int(self.get_light(deviceId)["state"]["bri"])
 
-    def get_light_brightness(self, deviceId):
-        return self.get_light(deviceId)["state"]["bri"]
-
-    def set_light_breathing(self, deviceId, effect):
+    def set_light_saturation(self, deviceId: int, saturation: int):
         res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"alert": effect})
+            "PUT", url=f"/lights/{deviceId}/state", body={"sat": saturation})
+        self.__ExceptionError(res)
 
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        return int(self.get_light(deviceId)["state"]["sat"])
 
-        return self.get_light(deviceId)["state"]["alert"]
+    def get_light_saturation(self, deviceId: int) -> int:
+        return int(self.get_light(deviceId)["state"]["sat"])
 
-    def colorloop_light_toggle(self, deviceId):
+    def set_light_breathing(self, deviceId: int, breathing: str) -> str:
+        if breathing == "long":
+            brth = "lselect"
+        elif breakpoint == "once":
+            brth = "select"
+        else:
+            brth = "none"
+
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body={"alert": brth})
+        self.__ExceptionError(res)
+
+        if self.get_light(deviceId)["state"]["alert"] == "lselect":
+            return "long"
+        elif self.get_light(deviceId)["state"]["alert"] == "select":
+            return "once"
+        else:
+            return "none"
+
+    def colorloop_light_toggle(self, deviceId: int) -> str:
         val = self.get_light(deviceId)["state"]["effect"]
         if val == "none":
             val = "colorloop"
@@ -310,25 +310,51 @@ class Hue:
 
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
-
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]["effect"]
 
-    def colorloop_light_set(self, deviceId, effect):
+    def colorloop_light_set(self, deviceId: int, effect: bool) -> str:
+        if effect == True:
+            val = "colorloop"
+        else:
+            val = "none"
+
         res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"effect": effect})
+            "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
+        self.__ExceptionError(res)
 
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
+        if self.get_light(deviceId)["state"]["effect"] == "colorloop":
+            return True
+        else:
+            return False
 
-        return self.get_light(deviceId)["state"]["effect"]
-
-    def get_light_effect(self, deviceId):
+    def get_light_effect(self, deviceId: int) -> dict:
         return({
             'effect': self.get_light(deviceId)["state"]["effect"],
             'breathing': self.get_light(deviceId)["state"]["alert"]
         })
+
+    def rgb2xyb(self, rgbTuple: tuple[int, int, int]):
+        r = rgbTuple[0]
+        g = rgbTuple[1]
+        b = rgbTuple[2]
+
+        r = ((r+0.055)/1.055)**2.4 if r > 0.04045 else r/12.92
+        g = ((g+0.055)/1.055)**2.4 if g > 0.04045 else g/12.92
+        b = ((b+0.055)/1.055)**2.4 if b > 0.04045 else b/12.92
+
+        X = r * 0.4124 + g * 0.3576 + b * 0.1805
+        Y = r * 0.2126 + g * 0.7152 + b * 0.0722
+        Z = r * 0.0193 + g * 0.1192 + b * 0.9505
+
+        return X / (X + Y + Z), Y / (X + Y + Z), int(Y*254)
+
+    def set_light_color(self, deviceId, rgbTuple: tuple[int, int, int]) -> list:
+        x, y, b = self.rgb2xyb(rgbTuple)
+
+        res = self.__authenticated_api_request(
+            "PUT", url=f"/lights/{deviceId}/state", body={"xy": [x, y]})
+        self.__ExceptionError(res)
+
+        return self.get_light(deviceId)["state"]["xy"]
