@@ -1,6 +1,5 @@
+from cmath import e
 import requests as reqs
-from requests import get
-import urllib3 as urll3
 import os
 import pickle
 from zeroconf import ServiceBrowser, Zeroconf
@@ -8,43 +7,9 @@ from time import sleep
 import socket
 
 
-class __mdns_listener:
-    def __init__(self, add):
-        self.__add = add
-
-    def remove_service(self, zeroconf, type, name):
-        "empty"
-
-    def update_service(self, zeroconf, type, name):
-        "empty"
-
-    def add_service(self, zeroconf, type, name):
-        serviceInfo = zeroconf.get_service_info(type, name)
-        ip = "err"
-        if serviceInfo:
-            ip = socket.inet_ntoa(serviceInfo.addresses[0])
-
-        self.__add(name=name, ip=ip)
-
-
-def BrowseEndpoint(addF):
-    res = get("https://discovery.meethue.com/")
-    for bridge in res.json():
-        addF(name=bridge["name"], ip=bridge["internalipaddress"])
-
-
-def BrowseMdns(target, addF):
-    zeroConf = Zeroconf()
-    listener = __mdns_listener(add=addF)
-    browser = ServiceBrowser(zeroConf, target, listener)
-    sleep(3)
-    zeroConf.close()
-
-
 class Hue:
     def __init__(self, ip=None):
-        self.requests = reqs
-        self.urllib3 = urll3
+        self.requests = reqs.Session()
 
         self.__bridge = None
         self.__discovered_bridges = []
@@ -56,6 +21,36 @@ class Hue:
         self.__username_path = f"{self.__workingDir}/.cached_username_important"
 
         self.__startupLogic(ip)
+
+    class __mdns_listener:
+        def __init__(self, add):
+            self.__add = add
+
+        def remove_service(self, zeroconf, type, name):
+            "empty"
+
+        def update_service(self, zeroconf, type, name):
+            "empty"
+
+        def add_service(self, zeroconf, type, name):
+            serviceInfo = zeroconf.get_service_info(type, name)
+            ip = "err"
+            if serviceInfo:
+                ip = socket.inet_ntoa(serviceInfo.addresses[0])
+
+            self.__add(name=name, ip=ip)
+
+    def __BrowseEndpoint(self, addF):
+        res = self.requests("https://discovery.meethue.com/")
+        for bridge in res.json():
+            addF(name=bridge["name"], ip=bridge["internalipaddress"])
+
+    def __BrowseMdns(self, target, addF):
+        zeroConf = Zeroconf()
+        listener = self.__mdns_listener(add=addF)
+        ServiceBrowser(zeroConf, target, listener)
+        sleep(3)
+        zeroConf.close()
 
     def __startupLogic(self, ip):
         if os.path.exists(self.__ip_path):
@@ -74,12 +69,12 @@ class Hue:
         if ip is not None:
             self.__bridge_discovered(ip)
 
-        BrowseMdns("_hue._tcp.local.", lambda name,
-                   ip: self.__discovered_bridges.append({"name": name, "ip": ip}))
+        self.__BrowseMdns("_hue._tcp.local.", lambda name,
+                          ip: self.__discovered_bridges.append({"name": name, "ip": ip}))
 
         if len(self.__discovered_bridges) == 0:
-            BrowseEndpoint(lambda name,
-                           ip: self.__discovered_bridges.append({"name": name, "ip": ip}))
+            self.__BrowseEndpoint(lambda name,
+                                  ip: self.__discovered_bridges.append({"name": name, "ip": ip}))
 
         if len(self.__discovered_bridges) >= 2:
             raise Exception(
@@ -89,8 +84,16 @@ class Hue:
 
     def __bridge_discovered(self, ip):
         self.__bridgeIp = ip
-        res = self.__unauthenticated_api_request("GET", url="/0/config")
-        if res:
+        res = None
+        try:
+            res = self.__unauthenticated_api_request("GET", url="/0/config")
+        except:
+            if self.__discoveryTried > 3:
+                raise Exception("Could not find bridge.")
+
+            self.__discover()
+            self.__discoveryTried += 1
+        else:
             with open(self.__ip_path, 'w') as f:
                 self.__bridgeIp = ip
                 f.write(ip)
@@ -109,13 +112,6 @@ class Hue:
                         self.__authenticate(ip, resJson=res)
             else:
                 self.__authenticate(ip, resJson=res)
-
-        else:
-            if self.__discoveryTried > 3:
-                raise Exception("Could not find bridge.")
-
-            self.__discover()
-            self.__discoveryTried += 1
 
     def __authenticate(self, ip, resJson):
         authReqJsonOne = self.__unauthenticated_api_request(
@@ -182,11 +178,14 @@ class Hue:
             raise Exception(
                 f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
 
+    def api_request(self, method, url, body={}) -> dict:
+        bud = self.__authenticated_api_request(
+            method=method, url=url, body=body)
+        return bud
+
     def get_all_lights(self):
         devices = []
         devs = self.__authenticated_api_request("GET", url="/lights")
-
-        self.__ExceptionError(devs)
 
         for dev in devs:
             devices.append({
@@ -216,7 +215,6 @@ class Hue:
     def get_light(self, deviceId: int) -> dict:
         dev = self.__authenticated_api_request(
             "GET", url="/lights/" + str(deviceId))
-        self.__ExceptionError(dev)
 
         return({
             "type": dev["type"],
@@ -238,17 +236,15 @@ class Hue:
             }
         })
 
-    def onOff_light_toggle(self, deviceId: int) -> str:
+    def toggle_light(self, deviceId: int) -> str:
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": not self.get_light(deviceId)["state"]["on"]})
-        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]["on"]
 
-    def onOff_light_set(self, deviceId: int, onOff: bool) -> str:
+    def set_light(self, deviceId: int, onOff: bool) -> str:
         res = self.__authenticated_api_request(
             "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": onOff})
-        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]["on"]
 
@@ -258,24 +254,21 @@ class Hue:
     def set_light_custom(self, deviceId: int, customData: dict) -> dict:
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body=customData)
-        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]
 
     def set_light_brightness(self, deviceId: int, brightness: int) -> int:
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"bri": brightness})
-        self.__ExceptionError(res)
 
         return int(self.get_light(deviceId)["state"]["bri"])
 
     def get_light_brightness(self, deviceId: int) -> int:
         return int(self.get_light(deviceId)["state"]["bri"])
 
-    def set_light_saturation(self, deviceId: int, saturation: int):
+    def set_light_saturation(self, deviceId: int, saturation: int) -> int:
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"sat": saturation})
-        self.__ExceptionError(res)
 
         return int(self.get_light(deviceId)["state"]["sat"])
 
@@ -292,7 +285,6 @@ class Hue:
 
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"alert": brth})
-        self.__ExceptionError(res)
 
         if self.get_light(deviceId)["state"]["alert"] == "lselect":
             return "long"
@@ -301,7 +293,7 @@ class Hue:
         else:
             return "none"
 
-    def colorloop_light_toggle(self, deviceId: int) -> str:
+    def toggle_light_colorloop(self, deviceId: int) -> str:
         val = self.get_light(deviceId)["state"]["effect"]
         if val == "none":
             val = "colorloop"
@@ -310,11 +302,10 @@ class Hue:
 
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
-        self.__ExceptionError(res)
 
         return self.get_light(deviceId)["state"]["effect"]
 
-    def colorloop_light_set(self, deviceId: int, effect: bool) -> str:
+    def set_light_colorloop(self, deviceId: int, effect: bool) -> str:
         if effect == True:
             val = "colorloop"
         else:
@@ -322,7 +313,6 @@ class Hue:
 
         res = self.__authenticated_api_request(
             "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
-        self.__ExceptionError(res)
 
         if self.get_light(deviceId)["state"]["effect"] == "colorloop":
             return True

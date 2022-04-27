@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import pathlib
 
 HERE = pathlib.Path(__file__).parent
@@ -12,12 +12,11 @@ setup(
     author="Jakob K",
     description="Python library for Philips Hue",
     long_description=README,
-    packages=[
-        "pyhue",
-    ],
+    packages=find_packages(exclude=[".cached*"]),
     url="https://github.com/jkampich1411/pyhue",
 
-    requires=["zeroconf", "requests", "urllib3"],
+    requires=["zeroconf", "requests"],
+    install_requires=["zeroconf", "requests"],
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
