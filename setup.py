@@ -16,6 +16,6 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
     ],
-    license="https://jkdev.mit-license.org/",
+    license="MIT",
     author_email="me@jkdev.run",
 )
