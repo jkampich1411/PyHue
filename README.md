@@ -64,3 +64,4 @@ Finally, if you want to make custom API-Requests, you should use this:
 ```
 
 ## Happy Coding!
+## More information is in the Docs linked above!
