@@ -4,7 +4,7 @@ import pathlib
 HERE = pathlib.Path(__file__).parent
 setup(
     name="py3-PyHue",
-    version="0.1a0",
+    version="0.1a1",
     author="Jakob K",
     description="Python3 library for Philips Hue",
     long_description=(HERE / "README.md").read_text(),
