@@ -38,7 +38,7 @@ Now a new instance of the Hue class is created. If you already used this package
 After a bridge was discovered, the authentication process will start. You will have to press the button on the front of the Bridge. After that, press the enter key to proceed. After this process you will have a new file '.cached_username_important' in the root directory.
 
 #### Now you can start coding!
-⠀
+
 ### Usage:
 All of the available methods are described in the documentation! (It's linked above! You should really check it out!)
 
