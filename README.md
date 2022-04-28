@@ -42,6 +42,13 @@ After a bridge was discovered, the authentication process will start. You will h
 ### Usage:
 All of the available methods are described in the documentation! (It's linked above! You should really check it out!)
 
+To list all lights, you can use this!:
+```python
+    from py3_pyhue import Hue
+    hue = Hue()
+    print(hue.get_all_lights())
+```
+
 But for example, to toggle the light with the id '1', you can use the following code:
 ```python
     from py3_pyhue import Hue
@@ -49,11 +56,11 @@ But for example, to toggle the light with the id '1', you can use the following 
     hue.toggle_light(1)
 ```
 
-To list all lights, you can use this!:
+To set the lights on/off state, use this:
 ```python
     from py3_pyhue import Hue
     hue = Hue()
-    print(hue.get_all_lights())
+    hue.set_light(1, bool("<onOff>"))
 ```
 
 Finally, if you want to make custom API-Requests, you should use this:
