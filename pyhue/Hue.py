@@ -1,4 +1,3 @@
-from cmath import e
 import requests as reqs
 import os
 import pickle

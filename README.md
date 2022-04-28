@@ -24,12 +24,12 @@ Here you have 2 options: Either the Auto-Discovery or the manual setting!
 
 Auto-Discovery:
 ```python
-    from py3_PyHue import Hue
+    from PyHue import Hue
     hue = Hue()
 ```
 Manual:
 ```python
-    from py3_PyHue import Hue
+    from PyHue import Hue
     hue = Hue(ip='<your ip address>')
 ```
 
@@ -44,28 +44,28 @@ All of the available methods are described in the documentation! (It's linked ab
 
 To list all lights, you can use this!:
 ```python
-    from py3_pyhue import Hue
+    from PyHue import Hue
     hue = Hue()
     print(hue.get_all_lights())
 ```
 
 But for example, to toggle the light with the id '1', you can use the following code:
 ```python
-    from py3_pyhue import Hue
+    from PyHue import Hue
     hue = Hue()
     hue.toggle_light(1)
 ```
 
 To set the lights on/off state, use this:
 ```python
-    from py3_pyhue import Hue
+    from PyHue import Hue
     hue = Hue()
     hue.set_light(1, bool("<onOff>"))
 ```
 
 Finally, if you want to make custom API-Requests, you should use this:
 ```python
-    from py3_pyhue import Hue
+    from PyHue import Hue
     hue = Hue()
     print(hue.api_request('<METHOD>', '<ENDPOINT>', <body (dict)>))
 ```
