@@ -3,4 +3,5 @@ __pycache__
 env
 test.py
 build/
-pyhue.egg-info/
+py3_pyhue.egg-info/
+dist/
