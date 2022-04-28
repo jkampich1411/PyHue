@@ -1,0 +1,15 @@
+name: PyPi-Upload
+on:
+  release:
+    types: [published, prereleased]
+jobs:
+  checkout-repo:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Publish Package
+        uses: ortega2247/pypi-upload-action@v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}
