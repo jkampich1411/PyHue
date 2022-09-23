@@ -3,8 +3,6 @@ from .Bridge import Bridge
 from .libs import Converter as __conv
 __colourc = __conv()
 
-
-
 class Lights(object):
     def __init__(self, bridge: Bridge, lightId: int):
         self.__brid = bridge

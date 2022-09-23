@@ -24,13 +24,13 @@ Here you have 2 options: Either the Auto-Discovery or the manual setting!
 
 Auto-Discovery:
 ```python
-    from PyHue import Hue
-    hue = Hue()
+    from PyHue import *
+    bridge = Bridge()
 ```
 Manual:
 ```python
-    from PyHue import Hue
-    hue = Hue(ip='<your ip address>')
+    from PyHue import *
+    bridge = Bridge(ip='<your ip address>')
 ```
 
 Now a new instance of the Hue class is created. If you already used this package, you will notice, that the package will automagicaly connect to the Hue bridge. To restart the discovery process, stop the Python3 script and delete the file '.cached_ip_important' from the root directory (i.e. There, where the main script is located).
@@ -44,30 +44,39 @@ All of the available methods are described in the documentation! (It's linked ab
 
 To list all lights, you can use this!:
 ```python
-    from PyHue import Hue
-    hue = Hue()
-    print(hue.get_all_lights())
+    from PyHue import *
+    bridge = Bridge()
+    print(bridge.get_all_lights())
 ```
 
 But for example, to toggle the light with the id '1', you can use the following code:
 ```python
-    from PyHue import Hue
-    hue = Hue()
-    hue.toggle_light(1)
+    from PyHue import *
+    bridge = Bridge()
+    
+    light = Lights(bridge, 1)
+    light.toggle_power()
+
 ```
 
-To set the lights on/off state, use this:
+To turn the light on, use this: (In this case using light-id '1' again)
 ```python
-    from PyHue import Hue
-    hue = Hue()
-    hue.set_light(1, bool("<onOff>"))
+    from PyHue import *
+    bridge = Bridge()
+
+    light = Lights(bridge, 1)
+    light.power = True
+
+    # or to turn it off:
+    light.power = False 
+
 ```
 
 Finally, if you want to make custom API-Requests, you should use this:
 ```python
-    from PyHue import Hue
-    hue = Hue()
-    print(hue.api_request('<METHOD>', '<ENDPOINT>', <body (dict)>))
+    from PyHue import *
+    bridge = Bridge()
+    print(bridge.api_request('<METHOD>', '<ENDPOINT>', <body (dict)>))
 ```
 
 ## Happy Coding!
