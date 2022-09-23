@@ -1,12 +1,15 @@
 import requests as reqs
 import os
-import pickle
 from zeroconf import ServiceBrowser, Zeroconf
 from time import sleep
 import socket
 
+def __ExceptionError(res):
+    if "error" in res[0]:
+        raise Exception(
+            f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
 
-class Hue:
+class Bridge(object):
     def __init__(self, ip=None):
         self.requests = reqs.Session()
 
@@ -40,7 +43,7 @@ class Hue:
             self.__add(name=name, ip=ip)
 
     def __BrowseEndpoint(self, addF):
-        res = self.requests("https://discovery.meethue.com/")
+        res = self.requests.get("https://discovery.meethue.com/")
         for bridge in res.json():
             addF(name=bridge["name"], ip=bridge["internalipaddress"])
 
@@ -74,10 +77,12 @@ class Hue:
         if len(self.__discovered_bridges) == 0:
             self.__BrowseEndpoint(lambda name,
                                   ip: self.__discovered_bridges.append({"name": name, "ip": ip}))
+        if len(self.__discovered_bridges) == 0:
+            raise Exception("Could not find bridge.")
 
         if len(self.__discovered_bridges) >= 2:
             raise Exception(
-                "Found more than one bridge, please specify the IP address of the bridge you want to use with the parameter 'ip'.")
+                "Found more than one bridge, please specify the IP address of the bridge you want to use with the parameter 'ip'. Discovered bridges: " + str(self.__discovered_bridges))
         else:
             self.__bridge_discovered(self.__discovered_bridges[0]["ip"])
 
@@ -172,19 +177,16 @@ class Hue:
         else:
             raise Exception("Error: " + str(res.status_code) + " " + res.text)
 
-    def __ExceptionError(self, res):
-        if "error" in res[0]:
-            raise Exception(
-                f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
-
     def api_request(self, method, url, body={}) -> dict:
         bud = self.__authenticated_api_request(
             method=method, url=url, body=body)
         return bud
 
+
+    # Bridge Commands 
     def get_all_lights(self):
         devices = []
-        devs = self.__authenticated_api_request("GET", url="/lights")
+        devs = self.api_request("GET", url="/lights")
 
         for dev in devs:
             devices.append({
@@ -198,152 +200,15 @@ class Hue:
         return(devices)
 
     def rename_light(self, deviceId: int, newName: str) -> bool:
-        res = self.__authenticated_api_request(
+        res = self.api_request(
             "PUT", url="/lights/" + str(deviceId), body={"name": newName})
-        self.__ExceptionError(res)
+        __ExceptionError(res)
 
         return True
 
     def delete_light(self, deviceId: int) -> bool:
-        res = self.__authenticated_api_request(
+        res = self.api_request(
             "DELETE", url="/lights/" + str(deviceId))
-        self.__ExceptionError(res)
+        __ExceptionError(res)
 
         return True
-
-    def get_light(self, deviceId: int) -> dict:
-        dev = self.__authenticated_api_request(
-            "GET", url="/lights/" + str(deviceId))
-
-        return({
-            "type": dev["type"],
-            "manufacturer": dev["manufacturername"],
-            "productName": dev["productname"],
-            "modelId": dev["modelid"],
-            "name": dev["name"],
-            "state": {
-                "on": dev["state"]["on"],
-                "bri": dev["state"]["bri"],
-                "hue": dev["state"]["hue"],
-                "sat": dev["state"]["sat"],
-                "xy": dev["state"]["xy"],
-                "ct": dev["state"]["ct"],
-                "alert": dev["state"]["alert"],
-                "effect": dev["state"]["effect"],
-                "colormode": dev["state"]["colormode"],
-                "reachable": dev["state"]["reachable"],
-            }
-        })
-
-    def toggle_light(self, deviceId: int) -> str:
-        res = self.__authenticated_api_request(
-            "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": not self.get_light(deviceId)["state"]["on"]})
-
-        return self.get_light(deviceId)["state"]["on"]
-
-    def set_light(self, deviceId: int, onOff: bool) -> str:
-        res = self.__authenticated_api_request(
-            "PUT", url="/lights/" + str(deviceId) + "/state", body={"on": onOff})
-
-        return self.get_light(deviceId)["state"]["on"]
-
-    def get_onOff(self, deviceId: int):
-        return self.get_light(deviceId=deviceId)["state"]["on"]
-
-    def set_light_custom(self, deviceId: int, customData: dict) -> dict:
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body=customData)
-
-        return self.get_light(deviceId)["state"]
-
-    def set_light_brightness(self, deviceId: int, brightness: int) -> int:
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"bri": brightness})
-
-        return int(self.get_light(deviceId)["state"]["bri"])
-
-    def get_light_brightness(self, deviceId: int) -> int:
-        return int(self.get_light(deviceId)["state"]["bri"])
-
-    def set_light_saturation(self, deviceId: int, saturation: int) -> int:
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"sat": saturation})
-
-        return int(self.get_light(deviceId)["state"]["sat"])
-
-    def get_light_saturation(self, deviceId: int) -> int:
-        return int(self.get_light(deviceId)["state"]["sat"])
-
-    def set_light_breathing(self, deviceId: int, breathing: str) -> str:
-        if breathing == "long":
-            brth = "lselect"
-        elif breakpoint == "once":
-            brth = "select"
-        else:
-            brth = "none"
-
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"alert": brth})
-
-        if self.get_light(deviceId)["state"]["alert"] == "lselect":
-            return "long"
-        elif self.get_light(deviceId)["state"]["alert"] == "select":
-            return "once"
-        else:
-            return "none"
-
-    def toggle_light_colorloop(self, deviceId: int) -> str:
-        val = self.get_light(deviceId)["state"]["effect"]
-        if val == "none":
-            val = "colorloop"
-        else:
-            val = "none"
-
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
-
-        return self.get_light(deviceId)["state"]["effect"]
-
-    def set_light_colorloop(self, deviceId: int, effect: bool) -> str:
-        if effect == True:
-            val = "colorloop"
-        else:
-            val = "none"
-
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"effect": val})
-
-        if self.get_light(deviceId)["state"]["effect"] == "colorloop":
-            return True
-        else:
-            return False
-
-    def get_light_effect(self, deviceId: int) -> dict:
-        return({
-            'effect': self.get_light(deviceId)["state"]["effect"],
-            'breathing': self.get_light(deviceId)["state"]["alert"]
-        })
-
-    def rgb2xyb(self, rgbTuple: tuple[int, int, int]):
-        r = rgbTuple[0]
-        g = rgbTuple[1]
-        b = rgbTuple[2]
-
-        r = ((r+0.055)/1.055)**2.4 if r > 0.04045 else r/12.92
-        g = ((g+0.055)/1.055)**2.4 if g > 0.04045 else g/12.92
-        b = ((b+0.055)/1.055)**2.4 if b > 0.04045 else b/12.92
-
-        X = r * 0.4124 + g * 0.3576 + b * 0.1805
-        Y = r * 0.2126 + g * 0.7152 + b * 0.0722
-        Z = r * 0.0193 + g * 0.1192 + b * 0.9505
-
-        return X / (X + Y + Z), Y / (X + Y + Z), int(Y*254)
-
-    def set_light_color(self, deviceId, rgbTuple: tuple[int, int, int]) -> list:
-        x, y, b = self.rgb2xyb(rgbTuple)
-
-        res = self.__authenticated_api_request(
-            "PUT", url=f"/lights/{deviceId}/state", body={"xy": [x, y]})
-        self.__ExceptionError(res)
-
-        return self.get_light(deviceId)["state"]["xy"]
