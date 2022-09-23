@@ -95,8 +95,13 @@ class Lights(object):
 
 
     @property
-    def breathing(self) -> bool:
-        return not not self.light["state"]["alert"]
+    def breathing(self) -> str:
+        if self.light["state"]["alert"] == "lselect":
+            return "long"
+        elif self.light["state"]["alert"] == "select":
+            return "once"
+        else:
+            return "none"
 
     @breathing.setter
     def breathing(self, breathing: str) -> str:
