@@ -1,6 +1,7 @@
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/py3-PyHue?style=for-the-badge&logo=python&logoColor=green)](https://python.org)
 [![PyPI](https://img.shields.io/pypi/v/py3-pyhue?label=py3-PyHue&logo=python&logoColor=green&style=for-the-badge)](https://pypi.org/project/py3-PyHue/)
-[![DocsImage](https://img.shields.io/badge/Documentation-click%20here!-informational?style=for-the-badge)](https://jkam.notion.site/PyHue-6a7655a97f0249729a5dc729dd801cf0)
+[![PyPi - Downloads](https://img.shields.io/pypi/dm/py3-PyHue?label=Downloads&style=for-the-badge)](https://pypi.org/project/py3-PyHue)
+[![DocsImage](https://img.shields.io/badge/Documentation-click%20here!-informational?style=for-the-badge)](https://jkam.notion.site/Documentation-9d709a907aad4f15ac86da4c168c014f)
 # Python3 Module for controlling Philips Hue lights.
 ## Quick Start Guide:
 ### Installation:
