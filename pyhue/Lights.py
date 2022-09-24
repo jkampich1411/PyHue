@@ -1,7 +1,9 @@
 from .Bridge import Bridge
 
-from .libs import Converter as __conv
-__colourc = __conv()
+from .libs import defc as c
+from .libs import Aconverter as aC
+from .libs import Bconverter as bC
+from .libs import Cconverter as cC
 
 class Lights(object):
     def __init__(self, bridge: Bridge, lightId: int):
@@ -14,7 +16,7 @@ class Lights(object):
                 f"Error {res[0]['error']['type']}: {res[0]['error']['description']} at {res[0]['error']['address']}")
 
 
-    def set_custom(self, customData: dict) -> dict:
+    def api_request(self, customData: dict) -> dict:
         res = self.__brid.api_request(
             "PUT", url=f"/lights/{self.__id}/state", body=customData)
         self.__ExceptionError(res)
@@ -168,11 +170,11 @@ class Lights(object):
 
         bri = self.light["state"]["bri"]
 
-        return __colourc.xy_to_rgb(x, y, bri)
+        return c.xy_to_rgb(x, y, bri)
     
     @colour.setter
     def colour(self, rgbTuple: tuple[int, int, int]) -> list:
-        xy = __colourc.rgb_to_xy(rgbTuple[0], rgbTuple[1], rgbTuple[2])
+        xy = c.rgb_to_xy(rgbTuple[0], rgbTuple[1], rgbTuple[2])
         x, y = xy[0], xy[1]
 
         res = self.__brid.api_request(
