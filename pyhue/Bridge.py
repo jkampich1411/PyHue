@@ -182,8 +182,7 @@ class Bridge(object):
             method=method, url=url, body=body)
         return bud
 
-
-    # Bridge Commands 
+    # Getters:
     def get_all_lights(self):
         devices = []
         devs = self.api_request("GET", url="/lights")
@@ -198,6 +197,21 @@ class Bridge(object):
                 "name": devs[dev]["name"],
             })
         return(devices)
+
+    def get_all_groups(self):
+        groups = []
+        grps = self.api_request("GET", url="/groups")
+
+        for grp in grps:
+            groups.append({
+                "id": int(grp),
+                "name": grps[grp]["name"],
+                "lights": grps[grp]["lights"],
+                "type": grps[grp]["type"],
+                "state": grps[grp]["action"],
+            })
+        return(groups)
+
 
     def rename_light(self, deviceId: int, newName: str) -> bool:
         res = self.api_request(
